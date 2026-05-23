@@ -2,140 +2,400 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Creator Hub - 100% Free</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Creator AI Hub & Chess Pro</title>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        jQuery.event.special.touchstart = { setup: function( _, ns, handle ) { this.addEventListener("touchstart", handle, { passive: false }); } };
+        jQuery.event.special.touchmove = { setup: function( _, ns, handle ) { this.addEventListener("touchmove", handle, { passive: false }); } };
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
-        body {
-            background-color: #0b0c10;
-            color: #c5c6c7;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-        }
-        .main-box {
-            background-color: #1f2833;
-            border-radius: 12px;
-            padding: 30px;
-            margin-top: 50px;
-            box-shadow: 0 4px 20px rgba(102, 252, 241, 0.2);
-        }
-        h1 {
-            color: #66fcf1;
-            font-size: 28px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        p {
-            color: #858688;
-            font-size: 14px;
-        }
-        input {
-            width: 85%;
-            padding: 12px;
-            border: 2px solid #45f3ff;
-            background-color: #0b0c10;
-            color: #fff;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            outline: none;
-        }
-        button {
-            background-color: #66fcf1;
-            color: #0b0c10;
-            font-weight: bold;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 92%;
-            box-shadow: 0 4px 10px rgba(102, 252, 241, 0.3);
-            margin-bottom: 20px;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        #outputBox {
-            display: none; 
-            text-align: left; 
-            padding: 15px; 
-            background: #0b0c10; 
-            border: 1px solid #66fcf1; 
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-        .output-title { color: #66fcf1; margin-top: 0; }
-        .highlight { color: #fff; font-weight: bold; }
+        /* Global UI/UX Styles */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0c10; color: #c5c6c7; margin: 0; padding: 0; overscroll-behavior: none; }
+        
+        /* Navigation Bar */
+        .navbar { background-color: #1f2833; padding: 15px 20px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 4px 10px rgba(102, 252, 241, 0.2); position: sticky; top: 0; z-index: 1000; }
+        .navbar .brand { color: #66fcf1; font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+        .nav-links { display: flex; gap: 15px; }
+        .nav-btn { background: transparent; color: #c5c6c7; border: none; font-size: 16px; cursor: pointer; padding: 5px 10px; transition: 0.3s; }
+        .nav-btn:hover, .nav-btn.active { color: #66fcf1; border-bottom: 2px solid #66fcf1; }
+
+        /* Sections (Tabs) */
+        .section { display: none; padding: 20px; max-width: 800px; margin: 0 auto; animation: fadeIn 0.5s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* UI/UX Fillers for Home Section */
+        .hero { text-align: center; padding: 40px 10px; background: linear-gradient(180deg, #1f2833 0%, #0b0c10 100%); border-radius: 0 0 20px 20px; }
+        .hero h1 { color: #66fcf1; font-size: 32px; margin-bottom: 10px; }
+        .hero p { color: #858688; font-size: 16px; }
+        
+        .how-it-works { display: flex; justify-content: space-around; flex-wrap: wrap; margin-top: 30px; gap: 15px; }
+        .step-card { background: #1f2833; padding: 20px; border-radius: 12px; width: 28%; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .step-card i { font-size: 30px; color: #45f3ff; margin-bottom: 10px; }
+        .step-card h4 { color: #fff; margin: 5px 0; }
+        @media(max-width: 600px) { .step-card { width: 100%; } }
+
+        /* Generator Controls */
+        .generator-box { background-color: #1f2833; padding: 25px; border-radius: 12px; margin-top: 30px; border: 1px solid #45f3ff; }
+        select, input { width: 100%; box-sizing: border-box; padding: 12px; border: 2px solid #45f3ff; background-color: #0b0c10; color: #fff; border-radius: 8px; font-size: 16px; margin-bottom: 15px; outline: none; }
+        .gen-btn { background-color: #66fcf1; color: #0b0c10; font-weight: bold; padding: 15px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; width: 100%; box-shadow: 0 4px 10px rgba(102, 252, 241, 0.3); transition: 0.2s; }
+        .gen-btn:active { transform: scale(0.98); }
+
+        /* Output Box & AI Buttons */
+        #outputBox { display: none; margin-top: 25px; }
+        .output-panel { background: #0b0c10; border-left: 4px solid #66fcf1; padding: 15px; margin-bottom: 15px; border-radius: 4px; font-size: 15px; line-height: 1.5; }
+        .highlight { color: #66fcf1; font-weight: bold; }
+        
+        .ai-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .ai-btn { flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .gpt-btn { background-color: #10a37f; color: white; }
+        .gemini-btn { background-color: #4285f4; color: white; }
+
+        /* Featured Creator Form Section */
+        .featured-card { background: #1f2833; text-align: center; padding: 30px; border-radius: 12px; margin-top: 20px; border: 1px solid #f1c40f; }
+        .featured-card i { font-size: 40px; color: #f1c40f; margin-bottom: 15px; }
+        .apply-btn { background-color: #f1c40f; color: #000; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 15px; }
+
+        /* Chess UI overrides */
+        .chess-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .controls { background: #1f2833; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-wrap: wrap; justify-content: center;}
+        #myBoard { width: 400px; margin-bottom: 20px; touch-action: none; border: 4px solid #45f3ff; border-radius: 4px; }
+        #status { font-size: 18px; font-weight: bold; color: #f1c40f; text-align: center; padding: 10px; background: #1f2833; width: 100%; border-radius: 8px; }
+        .chess-btn { background-color: #27ae60; color: white; font-weight: bold; padding: 8px 12px; border-radius: 4px; border: none; cursor: pointer;}
+        @media (max-width: 500px) { #myBoard { width: 340px; } }
     </style>
 </head>
 <body>
 
-    <div class="main-box">
-        <h1>AI Creator Hub</h1>
-        <p>Get Viral Scripts, Titles & 3D Thumbnail Prompts Instantly</p>
-        
-        <input type="text" id="topicInput" placeholder="Enter Topic (e.g., Free Fire 1v4 Clutch)">
-        <br>
-        
-        <button onclick="generateViralPack()">Generate Viral Pack</button>
+    <nav class="navbar">
+        <div class="brand"><i class="fa-solid fa-robot"></i> AI Hub Pro</div>
+        <div class="nav-links">
+            <button class="nav-btn active" onclick="switchTab('homeTab', this)"><i class="fa-solid fa-house"></i> Home</button>
+            <button class="nav-btn" onclick="switchTab('chessTab', this)"><i class="fa-solid fa-chess"></i> Chess</button>
+            <button class="nav-btn" onclick="switchTab('promoteTab', this)"><i class="fa-solid fa-fire"></i> Promote</button>
+        </div>
+    </nav>
 
-        <div id="outputBox">
-            <h3 class="output-title">🔥 Your Viral Pack is Ready:</h3>
-            <p><span class="highlight">🎬 Script (60s):</span> <br><span id="outScript"></span></p>
-            <p><span class="highlight">🏷️ Viral Tags:</span> <br><span id="outTags"></span></p>
-            <p><span class="highlight">🎨 Thumbnail Prompt:</span> <br><span id="outThumb"></span></p>
+    <div id="homeTab" class="section active">
+        <div class="hero">
+            <h1>Create Viral Content 10x Faster</h1>
+            <p>Generate Mega-Prompts for ChatGPT & Gemini</p>
+            
+            <div class="how-it-works">
+                <div class="step-card"><i class="fa-solid fa-list-check"></i><h4>1. Select</h4><p>Choose Category</p></div>
+                <div class="step-card"><i class="fa-solid fa-keyboard"></i><h4>2. Topic</h4><p>Type your Title</p></div>
+                <div class="step-card"><i class="fa-solid fa-copy"></i><h4>3. Generate</h4><p>Copy & Open AI</p></div>
+            </div>
+        </div>
+
+        <div class="generator-box">
+            <h3 style="margin-top:0;">Configure Your AI Prompt:</h3>
+            <select id="categorySelect">
+                <option value="gaming">🎮 Battle Royale Gaming (Free Fire/BGMI)</option>
+                <option value="movie">🎬 Movie & Anime Explanations</option>
+                <option value="funny">😂 Funny AI Shorts</option>
+            </select>
+
+            <input type="text" id="topicInput" placeholder="Enter specific topic (e.g., AWM Headshot Trick)">
+            
+            <button class="gen-btn" onclick="generateMegaPrompt()"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Mega-Prompt</button>
+
+            <div id="outputBox">
+                <h3 class="highlight">🔥 Your Assets are Ready!</h3>
+                
+                <p><strong>1. Mega-Prompt (Copy to AI):</strong></p>
+                <div class="output-panel" id="outPrompt"></div>
+                
+                <div class="ai-buttons">
+                    <button class="ai-btn gpt-btn" onclick="copyAndOpenAI('chatgpt')"><i class="fa-solid fa-clipboard"></i> Copy & Open ChatGPT</button>
+                    <button class="ai-btn gemini-btn" onclick="copyAndOpenAI('gemini')"><i class="fa-solid fa-clipboard"></i> Copy & Open Gemini</button>
+                </div>
+
+                <p style="margin-top:20px;"><strong>2. Viral Tags:</strong></p>
+                <div class="output-panel" id="outTags"></div>
+
+                <p><strong>3. 3D Thumbnail Prompt:</strong></p>
+                <div class="output-panel" id="outThumb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chessTab" class="section">
+        <div class="hero" style="padding: 20px 10px;">
+            <h1>Ultimate Chess AI</h1>
+            <p>Test your brain while generating ideas!</p>
+        </div>
+        
+        <div class="chess-wrapper">
+            <div class="controls">
+                <select id="gameMode">
+                    <option value="bot">Play vs Bot</option>
+                    <option value="human">Play vs 2nd Player</option>
+                </select>
+                <select id="botLevel">
+                    <option value="1">Noob (Random)</option>
+                    <option value="2">Pro (Greedy)</option>
+                    <option value="3">Genius (Smart)</option>
+                    <option value="4" selected>Legend (GM)</option>
+                </select>
+                <button id="resetBtn" class="chess-btn"><i class="fa-solid fa-rotate-right"></i> Restart Game</button>
+            </div>
+
+            <div id="myBoard"></div>
+            <div id="status">White to move</div>
+        </div>
+    </div>
+
+    <div id="promoteTab" class="section">
+        <div class="hero">
+            <h1>Grow Your Community</h1>
+            <p>Get featured on the homepage of this tool!</p>
+        </div>
+        <div class="featured-card">
+            <i class="fa-brands fa-youtube"></i>
+            <h2>Promote Your YT Channel</h2>
+            <p>Apply for a free shoutout. If approved, your channel link will be pinned here permanently for all users to see!</p>
+            <a href="https://docs.google.com/forms/u/0/" target="_blank" class="apply-btn"><i class="fa-solid fa-paper-plane"></i> Apply for Promotion</a>
         </div>
     </div>
 
     <script>
-        function generateViralPack() {
-            try {
-                // Topic validation
-                let topic = document.getElementById('topicInput').value;
-                if(topic === "") { 
-                    alert("Error: Please enter a topic first!"); 
-                    return; 
-                }
+        // --- 1. TAB SWITCHING LOGIC ---
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+            if(tabId === 'chessTab') { board.resize(); } // Fixes board size if rendered while hidden
+        }
 
-                // Credit Limit Logic
-                let today = new Date().toLocaleDateString();
-                let currentUsage = localStorage.getItem("usage_" + today);
+        // --- 2. MEGA-PROMPT GENERATOR LOGIC ---
+        let currentPrompt = ""; // Global variable to store prompt for copying
+
+        function generateMegaPrompt() {
+            let topic = document.getElementById('topicInput').value.trim();
+            let category = document.getElementById('categorySelect').value;
+            
+            if(topic === "") { 
+                alert("Please enter a topic first!"); 
+                return; 
+            }
+
+            let tagWord = topic.replace(/\s+/g, '');
+            let tagsText = "";
+            let thumbText = "";
+
+            // Constructing the Mega-Prompt for other AIs
+            if (category === "gaming") {
+                currentPrompt = "Act as an expert YouTube Shorts scriptwriter. I need a highly engaging, suspenseful, 60-second script for a Battle Royale game (Free Fire/BGMI). The main topic is: '" + topic + "'. The script must have an energetic hook, fast pacing, and a strong call to action to subscribe. Write in a mix of Hindi and English (Hinglish) using Roman English text.";
+                tagsText = "#Shorts #Gaming #" + tagWord + " #BattleRoyale #ViralGaming #ProTricks";
+                thumbText = "Epic 3D render of " + topic + " gameplay, glowing neon highlights, intense battle scene, high contrast, 8k resolution, YouTube thumbnail style.";
+            } 
+            else if (category === "movie") {
+                currentPrompt = "Act as a suspenseful movie and anime explainer. Write a 60-second YouTube Short script explaining the hidden details and climax of: '" + topic + "'. Start with a mind-blowing fact to hook the viewer. Keep the storytelling intense. Write in Roman Hinglish (Hindi + English).";
+                tagsText = "#MovieExplanation #Anime #Shorts #Viral #" + tagWord + " #HiddenDetails";
+                thumbText = "Cinematic dramatic poster for " + topic + ", dark and mysterious background, glowing title in the center, highly detailed, 16:9 aspect ratio.";
+            } 
+            else if (category === "funny") {
+                currentPrompt = "Act as a stand-up comedian and viral scriptwriter. Create a hilarious, 60-second YouTube Short script about: '" + topic + "'. Include funny relatable situations, exaggerated reactions, and a punchline at the end. Write in Roman Hinglish (Hindi + English).";
+                tagsText = "#FunnyShorts #Comedy #Trending #Viral #" + tagWord + " #AIHumor";
+                thumbText = "Highly exaggerated funny cartoon style 3D render of " + topic + ", vibrant colors, big goofy eyes, comic style lighting.";
+            }
+
+            // Output execution
+            document.getElementById('outputBox').style.display = 'block';
+            document.getElementById('outPrompt').innerText = currentPrompt;
+            document.getElementById('outTags').innerText = tagsText;
+            document.getElementById('outThumb').innerText = thumbText;
+        }
+
+        // --- 3. COPY & OPEN AI LOGIC ---
+        function copyAndOpenAI(aiName) {
+            if(!currentPrompt) return;
+            
+            // Clipboard API to copy text
+            navigator.clipboard.writeText(currentPrompt).then(() => {
+                alert("Prompt Copied Successfully! Now paste it in the AI chat.");
                 
-                if (currentUsage === null) {
-                    currentUsage = 0;
-                } else {
-                    currentUsage = parseInt(currentUsage);
+                // Open appropriate AI platform
+                if(aiName === 'chatgpt') {
+                    window.open('https://chatgpt.com/', '_blank');
+                } else if (aiName === 'gemini') {
+                    window.open('https://gemini.google.com/app', '_blank');
                 }
-                
-                let maxLimit = 3;
-                if (currentUsage >= maxLimit) {
-                    alert("Limit Reached! Aapne aaj ke 3 free credits use kar liye hain. Kal wapas aayen ya doston ke sath share karein!");
-                    return; 
+            }).catch(err => {
+                alert("Failed to copy text. Please copy manually.");
+            });
+        }
+
+        // --- 4. ULTIMATE CHESS ENGINE LOGIC (User Provided) ---
+        var board = null;
+        var game = new Chess();
+        var $status = $('#status');
+
+        var pieceValues = { 'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000 };
+        var centerBonus = [
+            [ -20, -10, -10, -10, -10, -10, -10, -20 ],
+            [ -10,   0,   0,   0,   0,   0,   0, -10 ],
+            [ -10,   0,  10,  15,  15,  10,   0, -10 ],
+            [ -10,   0,  15,  30,  30,  15,   0, -10 ],
+            [ -10,   0,  15,  30,  30,  15,   0, -10 ],
+            [ -10,   0,  10,  15,  15,  10,   0, -10 ],
+            [ -10,   0,   0,   0,   0,   0,   0, -10 ],
+            [ -20, -10, -10, -10, -10, -10, -10, -20 ]
+        ];
+
+        function isEndgame(gameLogic) {
+            var boardArray = gameLogic.board();
+            var pieceCount = 0;
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) { if (boardArray[i][j]) pieceCount++; }
+            }
+            return pieceCount <= 10;
+        }
+
+        function evaluateBoard(gameLogic, level) {
+            if (gameLogic.in_checkmate()) { return gameLogic.turn() === 'w' ? -999999 : 999999; }
+            if (gameLogic.in_draw()) return 0;
+            var totalEvaluation = 0;
+            var boardArray = gameLogic.board();
+            var endgameActive = isEndgame(gameLogic);
+
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    var piece = boardArray[i][j];
+                    if (piece) {
+                        var val = pieceValues[piece.type];
+                        if (level >= 3 && !endgameActive) {
+                            var positionalValue = centerBonus[i][j];
+                            val += (piece.color === 'w') ? positionalValue : centerBonus[7 - i][j];
+                        }
+                        totalEvaluation += piece.color === 'w' ? val : -val;
+                    }
                 }
+            }
+            return totalEvaluation;
+        }
 
-                let tagWord = topic.replace(/\s+/g, '');
-                
-                // Content Generation
-                document.getElementById('outputBox').style.display = 'block';
-                document.getElementById('outScript').innerText = "Kya aapko pata hai " + topic + " ka sabse bada secret kya hai? 99% log ye galti karte hain. Is video me dekho kaise pro players ye trick use karte hain!";
-                document.getElementById('outTags').innerText = "#Shorts #Viral #" + tagWord + " #Gaming #Trending";
-                document.getElementById('outThumb').innerText = "Epic 3D render of " + topic + ", glowing neon lights, intense action, 16:9 aspect ratio, 8k resolution.";
+        function orderMoves(gameLogic, moves) {
+            return moves.sort(function(a, b) {
+                var scoreA = 0, scoreB = 0;
+                if (a.includes('x')) scoreA += 10;
+                if (a.includes('+')) scoreA += 5;
+                if (b.includes('x')) scoreB += 10;
+                if (b.includes('+')) scoreB += 5;
+                return scoreB - scoreA;
+            });
+        }
 
-                // Save usage
-                currentUsage++;
-                localStorage.setItem("usage_" + today, currentUsage);
-                let remainingCredits = maxLimit - currentUsage;
+        function minimax(gameLogic, depth, alpha, beta, isMaximizingPlayer, level) {
+            if (gameLogic.in_checkmate()) { return isMaximizingPlayer ? -999999 + depth : 999999 - depth; }
+            if (depth === 0 || gameLogic.game_over()) { return evaluateBoard(gameLogic, level); }
 
-                alert("Success! Your content is generated. Remaining free credits today: " + remainingCredits);
+            var possibleMoves = orderMoves(gameLogic, gameLogic.moves());
 
-            } catch (error) {
-                alert("System Error: " + error.message);
+            if (isMaximizingPlayer) {
+                var bestVal = -999999;
+                for (var i = 0; i < possibleMoves.length; i++) {
+                    gameLogic.move(possibleMoves[i]);
+                    bestVal = Math.max(bestVal, minimax(gameLogic, depth - 1, alpha, beta, !isMaximizingPlayer, level));
+                    gameLogic.undo();
+                    alpha = Math.max(alpha, bestVal);
+                    if (beta <= alpha) break; 
+                }
+                return bestVal;
+            } else {
+                var bestVal = 999999;
+                for (var i = 0; i < possibleMoves.length; i++) {
+                    gameLogic.move(possibleMoves[i]);
+                    bestVal = Math.min(bestVal, minimax(gameLogic, depth - 1, alpha, beta, !isMaximizingPlayer, level));
+                    gameLogic.undo();
+                    beta = Math.min(beta, bestVal);
+                    if (beta <= alpha) break; 
+                }
+                return bestVal;
             }
         }
-    </script>
 
+        function makeBotMove() {
+            var possibleMoves = game.moves();
+            if (possibleMoves.length === 0) return;
+            var level = parseInt($('#botLevel').val());
+            var bestMove = null;
+
+            if (level === 1) {
+                var randomIndex = Math.floor(Math.random() * possibleMoves.length);
+                bestMove = possibleMoves[randomIndex];
+            } else {
+                var depth = 1; 
+                if (level === 3) depth = 2; 
+                if (level === 4) depth = 3; 
+                
+                var bestVal = 999999;
+                possibleMoves = orderMoves(game, possibleMoves);
+
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    game.move(possibleMoves[i]);
+                    if (game.in_checkmate()) { bestMove = possibleMoves[i]; game.undo(); break; }
+                    game.undo();
+                }
+
+                if (!bestMove) {
+                    for (var i = 0; i < possibleMoves.length; i++) {
+                        var move = possibleMoves[i];
+                        game.move(move);
+                        var boardValue = minimax(game, depth - 1, -1000000, 1000000, true, level);
+                        game.undo();
+                        if (boardValue < bestVal) { bestVal = boardValue; bestMove = move; }
+                    }
+                }
+                if(!bestMove) bestMove = possibleMoves[0];
+            }
+            game.move(bestMove);
+            board.position(game.fen());
+            updateStatus();
+        }
+
+        function onDragStart(source, piece, position, orientation) {
+            if (game.game_over()) return false;
+            var mode = $('#gameMode').val();
+            if (mode === 'bot' && piece.search(/^b/) !== -1) return false;
+            if (mode === 'human' && game.turn() === 'b' && piece.search(/^w/) !== -1) return false;
+            if (mode === 'human' && game.turn() === 'w' && piece.search(/^b/) !== -1) return false;
+        }
+
+        function onDrop(source, target) {
+            var move = game.move({ from: source, to: target, promotion: 'q' });
+            if (move === null) return 'snapback'; 
+            updateStatus();
+            var mode = $('#gameMode').val();
+            if (mode === 'bot' && !game.game_over()) { window.setTimeout(makeBotMove, 50); }
+        }
+
+        function onSnapEnd() { board.position(game.fen()); }
+
+        function updateStatus() {
+            var statusHTML = '';
+            var moveColor = (game.turn() === 'w') ? 'White' : 'Black';
+            if (game.in_checkmate()) { statusHTML = 'Game over, ' + moveColor + ' Checkmate ho gaya!'; } 
+            else if (game.in_draw()) { statusHTML = 'Game over, Draw ho gaya'; } 
+            else { statusHTML = moveColor + ' ki chaal hai'; if (game.in_check()) statusHTML += ', ' + moveColor + ' ko Check hai!'; }
+            $status.html(statusHTML);
+        }
+
+        var config = { draggable: true, position: 'start', onDragStart: onDragStart, onDrop: onDrop, onSnapEnd: onSnapEnd, pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png' };
+        board = Chessboard('myBoard', config);
+        updateStatus();
+
+        $('#resetBtn').on('click', function() { game.reset(); board.start(); updateStatus(); });
+        $('#gameMode').on('change', function() { game.reset(); board.start(); updateStatus(); });
+    </script>
 </body>
 </html>
